@@ -536,7 +536,6 @@
     function handleZoneClick() {
       if (!isLoggedIn) {
         alert("Please login to your Google account before uploading!");
-        // Triggers the official Google account chooser prompt
         if (window.google && google.accounts) {
           google.accounts.id.prompt();
         }
@@ -650,7 +649,7 @@
 
     function showSuccessLink(name) {
       const randomID = Math.random().toString(36).substring(2, 8);
-      shareUrl.value = `https://modnation.net/download/${randomID}/${encodeURIComponent(name)}`;
+      shareUrl.value = `https://puchio696.github.io/ModNation/download/${randomID}/${encodeURIComponent(name)}`;
       linkOutput.style.display = 'block';
     }
 
@@ -673,3 +672,4 @@
 
 </body>
 </html>
+
