@@ -1,0 +1,675 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ModNation - Dedicated Mod Host</title>
+  
+  <!-- Official Google Identity Services SDK -->
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+
+  <style>
+    :root {
+      --bg-main: #f0f8ff;          /* Light Alice Blue */
+      --bg-card: #ffffff;
+      --primary: #0284c7;          /* Sky Blue */
+      --primary-hover: #0369a1;
+      --accent: #38bdf8;
+      --danger: #ef4444;
+      --success: #22c55e;
+      --text-dark: #0f172a;
+      --text-muted: #64748b;
+      --border-color: #cbd5e1;
+      --radius: 12px;
+      --shadow: 0 4px 12px rgba(2, 132, 199, 0.08);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      background-color: var(--bg-main);
+      color: var(--text-dark);
+      line-height: 1.6;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    /* Navbar */
+    .navbar {
+      background-color: var(--bg-card);
+      border-bottom: 1px solid var(--border-color);
+      padding: 1rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      font-size: 1.5rem;
+      font-weight: 800;
+      color: var(--primary);
+    }
+
+    .logo-icon {
+      background-color: var(--primary);
+      color: white;
+      width: 36px;
+      height: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 8px;
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 1.5rem;
+      align-items: center;
+      list-style: none;
+    }
+
+    .nav-links button, .nav-links a {
+      font-weight: 500;
+      color: var(--text-muted);
+      background: none;
+      border: none;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: color 0.2s;
+    }
+
+    .nav-links button:hover, .nav-links a:hover {
+      color: var(--primary);
+    }
+
+    .btn {
+      background-color: var(--primary);
+      color: white !important;
+      padding: 0.6rem 1.2rem;
+      border-radius: 8px;
+      border: none;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background-color 0.2s;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .btn:hover {
+      background-color: var(--primary-hover);
+    }
+
+    .btn-secondary {
+      background-color: #e0f2fe;
+      color: var(--primary) !important;
+    }
+
+    .btn-secondary:hover {
+      background-color: #bae6fd;
+    }
+
+    /* Main Container */
+    .container {
+      max-width: 800px;
+      margin: 3rem auto;
+      padding: 0 1.5rem;
+      flex: 1;
+      width: 100%;
+    }
+
+    .hero-title {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+
+    .hero-title h1 {
+      font-size: 2.2rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .hero-title p {
+      color: var(--text-muted);
+    }
+
+    /* Upload Box */
+    .upload-box {
+      background: var(--bg-card);
+      border: 2px dashed var(--accent);
+      border-radius: var(--radius);
+      padding: 4rem 2rem;
+      text-align: center;
+      box-shadow: var(--shadow);
+      cursor: pointer;
+      transition: border-color 0.2s, background-color 0.2s;
+      position: relative;
+    }
+
+    .upload-box.dragover {
+      background-color: #e0f2fe;
+      border-color: var(--primary);
+    }
+
+    .upload-icon {
+      width: 60px;
+      height: 60px;
+      background-color: #e0f2fe;
+      color: var(--primary);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 1rem;
+      font-size: 1.8rem;
+    }
+
+    .allowed-tags {
+      display: flex;
+      justify-content: center;
+      gap: 0.5rem;
+      margin-top: 1rem;
+    }
+
+    .tag {
+      background-color: #f1f5f9;
+      border: 1px solid var(--border-color);
+      color: var(--primary);
+      font-weight: 700;
+      padding: 0.2rem 0.6rem;
+      border-radius: 6px;
+      font-size: 0.85rem;
+    }
+
+    #fileInput {
+      display: none;
+    }
+
+    /* Status Messages & Progress */
+    .status-area {
+      margin-top: 1.5rem;
+      display: none;
+      background: var(--bg-card);
+      padding: 1.5rem;
+      border-radius: var(--radius);
+      border: 1px solid var(--border-color);
+      box-shadow: var(--shadow);
+    }
+
+    .file-details {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.8rem;
+      font-weight: 600;
+    }
+
+    .progress-bar-bg {
+      width: 100%;
+      height: 10px;
+      background-color: #e2e8f0;
+      border-radius: 5px;
+      overflow: hidden;
+    }
+
+    .progress-bar-fill {
+      height: 100%;
+      width: 0%;
+      background-color: var(--primary);
+      transition: width 0.2s;
+    }
+
+    .error-msg {
+      color: var(--danger);
+      background-color: #fef2f2;
+      border: 1px solid #fecaca;
+      padding: 1rem;
+      border-radius: var(--radius);
+      margin-top: 1.5rem;
+      display: none;
+      text-align: center;
+      font-weight: 600;
+    }
+
+    /* Direct Link Output */
+    .link-output {
+      margin-top: 1.5rem;
+      display: none;
+      background: #f0fdf4;
+      border: 1px solid #bbf7d0;
+      padding: 1.5rem;
+      border-radius: var(--radius);
+    }
+
+    .link-output h3 {
+      color: var(--success);
+      margin-bottom: 0.5rem;
+    }
+
+    .link-box {
+      display: flex;
+      gap: 0.5rem;
+      margin-top: 0.5rem;
+    }
+
+    .link-box input {
+      flex: 1;
+      padding: 0.6rem;
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      outline: none;
+    }
+
+    /* FAQ Section */
+    .faq-section {
+      margin-top: 5rem;
+      padding-top: 2rem;
+      border-top: 1px solid var(--border-color);
+    }
+
+    .faq-section h2 {
+      font-size: 1.8rem;
+      text-align: center;
+      margin-bottom: 1.5rem;
+    }
+
+    .faq-item {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius);
+      margin-bottom: 0.8rem;
+      overflow: hidden;
+    }
+
+    .faq-question {
+      width: 100%;
+      padding: 1.2rem;
+      text-align: left;
+      background: none;
+      border: none;
+      font-weight: 700;
+      font-size: 1rem;
+      color: var(--text-dark);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+    }
+
+    .faq-question:hover {
+      background-color: #f8fafc;
+    }
+
+    .faq-answer {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.3s ease, padding 0.3s ease;
+      padding: 0 1.2rem;
+      color: var(--text-muted);
+      font-size: 0.95rem;
+    }
+
+    .faq-item.active .faq-answer {
+      max-height: 150px;
+      padding: 0 1.2rem 1.2rem;
+    }
+
+    .faq-item.active .faq-toggle {
+      transform: rotate(180deg);
+    }
+
+    .faq-toggle {
+      transition: transform 0.3s;
+      font-weight: 800;
+      color: var(--primary);
+    }
+
+    /* Logged In User Badge */
+    .user-badge {
+      display: none;
+      align-items: center;
+      gap: 0.6rem;
+      font-weight: 600;
+      color: var(--primary);
+    }
+
+    .user-avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background-color: var(--primary);
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.9rem;
+      overflow: hidden;
+    }
+
+    .user-avatar img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    footer {
+      background-color: var(--bg-card);
+      border-top: 1px solid var(--border-color);
+      text-align: center;
+      padding: 1.5rem;
+      color: var(--text-muted);
+      font-size: 0.9rem;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Navbar -->
+  <nav class="navbar">
+    <a href="#" class="logo">
+      <div class="logo-icon">M</div>
+      ModNation
+    </a>
+    <ul class="nav-links">
+      <li><a href="#upload-section">Upload</a></li>
+      <li><button onclick="scrollToFaq()">FAQ</button></li>
+      
+      <!-- Official Google Sign-In Container -->
+      <li id="loginNav">
+        <div id="g_id_onload"
+             data-client_id="YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com"
+             data-callback="handleGoogleLogin"
+             data-auto_prompt="false">
+        </div>
+        <div class="g_id_signin" data-type="standard" data-shape="rectangular" data-theme="outline" data-text="signin_with"></div>
+      </li>
+
+      <!-- Logged-in Profile Badge -->
+      <li id="userBadge" class="user-badge">
+        <div class="user-avatar" id="userAvatar">U</div>
+        <span id="userNameDisplay">User</span>
+        <button class="btn btn-secondary" onclick="logout()" style="padding: 0.4rem 0.8rem; font-size: 0.85rem;">Logout</button>
+      </li>
+    </ul>
+  </nav>
+
+  <main class="container">
+    
+    <div class="hero-title" id="upload-section">
+      <h1>Direct Bus & Truck Mod Host</h1>
+      <p>Upload .bussidmod and .scs files instantly.</p>
+    </div>
+
+    <!-- Hidden Input filtering allowed extensions -->
+    <input type="file" id="fileInput" accept=".bussidmod,.scs">
+
+    <!-- Interactive Drag & Drop Zone -->
+    <div class="upload-box" id="dropZone" onclick="handleZoneClick()">
+      <div class="upload-icon">↑</div>
+      <h2>Drag & Drop Mod File</h2>
+      <p style="color: var(--text-muted); margin: 0.5rem 0 1rem;">Select your file or drop it inside this area</p>
+      
+      <button class="btn btn-secondary">Browse Device</button>
+
+      <div class="allowed-tags">
+        <span class="tag">.bussidmod</span>
+        <span class="tag">.scs</span>
+      </div>
+    </div>
+
+    <!-- Error Banner -->
+    <div class="error-msg" id="errorBanner"></div>
+
+    <!-- Upload Progress Area -->
+    <div class="status-area" id="statusArea">
+      <div class="file-details">
+        <span id="fileName">mod_file.bussidmod</span>
+        <span id="progressPercent">0%</span>
+      </div>
+      <div class="progress-bar-bg">
+        <div class="progress-bar-fill" id="progressFill"></div>
+      </div>
+    </div>
+
+    <!-- Completed Download Link Output -->
+    <div class="link-output" id="linkOutput">
+      <h3>Upload Complete!</h3>
+      <p style="font-size: 0.9rem; color: var(--text-muted);">Share this direct link with your community:</p>
+      <div class="link-box">
+        <input type="text" id="shareUrl" readonly>
+        <button class="btn" onclick="copyLink()">Copy</button>
+      </div>
+    </div>
+
+    <!-- FAQ Accordion Section -->
+    <section class="faq-section" id="faqSection">
+      <h2>Frequently Asked Questions</h2>
+      
+      <div class="faq-item">
+        <button class="faq-question" onclick="toggleFaq(this)">
+          <span>Why is Google Login required to upload?</span>
+          <span class="faq-toggle">▼</span>
+        </button>
+        <div class="faq-answer">
+          Logging in protects our bandwidth from automated spam bots and allows you to manage all your uploaded direct download links unlimited times.
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <button class="faq-question" onclick="toggleFaq(this)">
+          <span>What file types are allowed?</span>
+          <span class="faq-toggle">▼</span>
+        </button>
+        <div class="faq-answer">
+          We strictly accept <strong>.bussidmod</strong> (Bus Simulator Indonesia) and <strong>.scs</strong> (Euro Truck Simulator 2 / American Truck Simulator) files.
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <button class="faq-question" onclick="toggleFaq(this)">
+          <span>How long do uploaded links stay active?</span>
+          <span class="faq-toggle">▼</span>
+        </button>
+        <div class="faq-answer">
+          Uploaded files remain active permanently as long as they receive at least 1 download every 90 days.
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <button class="faq-question" onclick="toggleFaq(this)">
+          <span>Is there a speed limit for downloads?</span>
+          <span class="faq-toggle">▼</span>
+        </button>
+        <div class="faq-answer">
+          No. ModNation provides direct full-speed downloads for all users without forced waiting timers or artificial throttles.
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <footer>
+    <p>&copy; 2026 ModNation. Dedicated BUSSID & ETS2/ATS Mod Hosting.</p>
+  </footer>
+
+  <script>
+    let isLoggedIn = false;
+
+    // DOM Elements
+    const dropZone = document.getElementById('dropZone');
+    const fileInput = document.getElementById('fileInput');
+    const errorBanner = document.getElementById('errorBanner');
+    const statusArea = document.getElementById('statusArea');
+    const fileName = document.getElementById('fileName');
+    const progressPercent = document.getElementById('progressPercent');
+    const progressFill = document.getElementById('progressFill');
+    const linkOutput = document.getElementById('linkOutput');
+    const shareUrl = document.getElementById('shareUrl');
+    const loginNav = document.getElementById('loginNav');
+    const userBadge = document.getElementById('userBadge');
+    const userNameDisplay = document.getElementById('userNameDisplay');
+    const userAvatar = document.getElementById('userAvatar');
+
+    const ALLOWED_EXTENSIONS = ['bussidmod', 'scs'];
+
+    /* Triggered when user attempts to upload */
+    function handleZoneClick() {
+      if (!isLoggedIn) {
+        alert("Please login to your Google account before uploading!");
+        // Triggers the official Google account chooser prompt
+        if (window.google && google.accounts) {
+          google.accounts.id.prompt();
+        }
+      } else {
+        fileInput.click();
+      }
+    }
+
+    /* Decodes the OAuth JWT Token sent by Google */
+    function parseJwt(token) {
+      const base64Url = token.split('.')[1];
+      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+      const jsonPayload = decodeURIComponent(window.atob(base64).split('').map(function(c) {
+          return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+      }).join(''));
+      return JSON.parse(jsonPayload);
+    }
+
+    /* Callback function called by official Google Identity SDK */
+    function handleGoogleLogin(response) {
+      const payload = parseJwt(response.credential);
+      
+      isLoggedIn = true;
+      userNameDisplay.innerText = payload.name;
+
+      if (payload.picture) {
+        userAvatar.innerHTML = `<img src="${payload.picture}" alt="Profile">`;
+      } else {
+        userAvatar.innerText = payload.name.charAt(0);
+      }
+
+      loginNav.style.display = 'none';
+      userBadge.style.display = 'flex';
+    }
+
+    function logout() {
+      isLoggedIn = false;
+      loginNav.style.display = 'block';
+      userBadge.style.display = 'none';
+      fileInput.value = '';
+      if (window.google && google.accounts) {
+        google.accounts.id.disableAutoSelect();
+      }
+    }
+
+    /* Drag-and-Drop Event Handlers */
+    ['dragenter', 'dragover'].forEach(eventName => {
+      dropZone.addEventListener(eventName, (e) => {
+        e.preventDefault();
+        dropZone.classList.add('dragover');
+      }, false);
+    });
+
+    ['dragleave', 'drop'].forEach(eventName => {
+      dropZone.addEventListener(eventName, (e) => {
+        e.preventDefault();
+        dropZone.classList.remove('dragover');
+      }, false);
+    });
+
+    dropZone.addEventListener('drop', (e) => {
+      if (!isLoggedIn) {
+        alert("Please login to your Google account before uploading!");
+        if (window.google && google.accounts) {
+          google.accounts.id.prompt();
+        }
+        return;
+      }
+      const files = e.dataTransfer.files;
+      if (files.length > 0) validateAndUpload(files[0]);
+    });
+
+    fileInput.addEventListener('change', () => {
+      if (fileInput.files.length > 0) validateAndUpload(fileInput.files[0]);
+    });
+
+    /* Upload & File Validation Logic */
+    function validateAndUpload(file) {
+      errorBanner.style.display = 'none';
+      linkOutput.style.display = 'none';
+
+      const fileExt = file.name.split('.').pop().toLowerCase();
+
+      if (!ALLOWED_EXTENSIONS.includes(fileExt)) {
+        errorBanner.innerText = `Invalid File Format! Only .bussidmod and .scs files are allowed.`;
+        errorBanner.style.display = 'block';
+        return;
+      }
+
+      fileName.innerText = file.name;
+      statusArea.style.display = 'block';
+
+      let progress = 0;
+      progressFill.style.width = '0%';
+      progressPercent.innerText = '0%';
+
+      const interval = setInterval(() => {
+        progress += 10;
+        progressFill.style.width = progress + '%';
+        progressPercent.innerText = progress + '%';
+
+        if (progress >= 100) {
+          clearInterval(interval);
+          setTimeout(() => {
+            statusArea.style.display = 'none';
+            showSuccessLink(file.name);
+          }, 400);
+        }
+      }, 150);
+    }
+
+    function showSuccessLink(name) {
+      const randomID = Math.random().toString(36).substring(2, 8);
+      shareUrl.value = `https://modnation.net/download/${randomID}/${encodeURIComponent(name)}`;
+      linkOutput.style.display = 'block';
+    }
+
+    function copyLink() {
+      shareUrl.select();
+      document.execCommand('copy');
+      alert('Download link copied to clipboard!');
+    }
+
+    /* FAQ Toggle */
+    function toggleFaq(btn) {
+      const item = btn.parentElement;
+      item.classList.toggle('active');
+    }
+
+    function scrollToFaq() {
+      document.getElementById('faqSection').scrollIntoView({ behavior: 'smooth' });
+    }
+  </script>
+
+</body>
+</html>
